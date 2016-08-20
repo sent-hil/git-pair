@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -44,34 +45,46 @@ func main() {
 	}
 
 	var (
-		nameOutput  []string
-		emailOutput []string
+		names  []string
+		emails []string
 	)
 
 	for k, v := range p.Authors {
 		for _, a := range pairs {
 			if k == a {
 				split := strings.Split(v, ";")
-				nameOutput = append(nameOutput, strings.TrimSpace(split[0]))
-				emailOutput = append(emailOutput, strings.TrimSpace(split[1]))
+				names = append(names, strings.TrimSpace(split[0]))
+				emails = append(emails, strings.TrimSpace(split[1]))
 			}
 		}
 	}
 
-	if len(nameOutput) != len(emailOutput) || len(nameOutput) != len(pairs) {
+	if len(names) != len(emails) || len(names) != len(pairs) {
 		fmt.Println("One or more pairs not found")
 		os.Exit(1)
 	}
 
-	var output string
-	output += strings.Join(nameOutput, " and ")
-	output += " "
+	nameOutput := strings.Join(names, " and ")
+	var emailOutput string
 
-	if len(emailOutput) > 1 {
-		output += fmt.Sprintf("<pair+%s@>", strings.Join(emailOutput, "+"))
+	if len(emails) > 1 {
+		emailOutput = fmt.Sprintf("<pair+%s@>", strings.Join(emails, "+"))
 	} else {
-		output += emailOutput[0]
+		emailOutput += emails[0]
 	}
 
-	fmt.Println(output)
+	if err = set_git_config("user.email", emailOutput); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	if err = set_git_config("user.name", nameOutput); err != nil {
+		os.Exit(1)
+	}
+}
+
+func set_git_config(key, value string) error {
+	args := []string{"config", key, value}
+	_, err := exec.Command("git", args...).CombinedOutput()
+	return err
 }
