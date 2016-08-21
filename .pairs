@@ -1,7 +1,3 @@
 pairs:
   ij: Indiana Jones; indiana@gmail.com
   jb: James Bond; james@gmail.com
-email:
-  prefix: pair
-  no_solo_prefix: true
-  global: false
